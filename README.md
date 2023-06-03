@@ -20,7 +20,7 @@ Your home dir will be the only directory still pointing to the real disk. This
 can be changed such that specific parts of your home dir reside in RAM for
 situations where some applications do heavy disk I/O from within your home.
 
-## Do I need this?
+## Prerequisites
 
 If you're unsure why you'd need this, or if you're fairly new to Linux, please
 don't use this system. It's powerful and somewhat stable, but nonetheless
@@ -79,26 +79,26 @@ All operations take just over 5 minutes to complete on my system.
 
 Additional info:
 
-The scripts in `utils` are internals used by `send_os_to_ram.sh` and not meant
-for users. They should not be run manually unless you're an advanced user that
-have read their source and know what you are doing. Those scripts assume
-they're being run from their containing directory.
+The scripts within the `utils` directory are internal scripts used by
+`send_os_to_ram.sh` and are not intended for regular users. Avoid running them
+manually unless you are an advanced user who has examined their source code and
+understands their purpose. These scripts assume they are being executed from
+their containing directory.
 
 ## How it works
 
-* Stops your display manager
-* Creates a ramdisk in `/mnt/ram_os_1166877`
+* Stops the display manager
+* Creates a ramdisk at `/mnt/ram_os_1166877`
 * Mount binds your home to `/mnt/physical_home_1166877`
 * Copies your OS dirs (excluding home) into `/mnt/ram_os_1166877`
-* Performs a mount bind of all system dirs in the RAM disk over the physical
-  dirs (for example, `/bin` now silently points to `/mnt/ram_os_1166877/bin`)
-* After that, it's done. It will not restart your display manager; it expects
-  you
-  to do that manually in case your want to double-check things first.
+* Performs a mount bind operation, redirecting all system directories to the
+  RAM disk (e.g., `/bin` now silently points to `/mnt/ram_os_1166877/bin`)
+* After that, it's done. It will not restart the display manager; it expects
+  you to do that manually in case you want to double-check things first.
 
 ## Live OS substitution
 
-You can use this system to load a whole different OS (and even a 
+You can use this system to load an entirely different OS (and even a
 [chroot](https://en.wikipedia.org/wiki/Chroot)
 setup), which will replace the host OS until reboot. See `OS_ROOT` in
 `vars.include` for documentation.
