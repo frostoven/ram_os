@@ -1,2 +1,8 @@
 /.idea
+
+# User-customized vars file.
 /vars.include
+
+# User-customized vars file aimed at sending local disk to RAM.
+/custom_vars_files/var*include
+
