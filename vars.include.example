@@ -1,0 +1,81 @@
+#!/bin/false
+
+# The dirs we want sent to the ramdisk. We don't include dirs like /proc, /sys,
+# and /run, because those don't actually reside on the disk, and messing with
+# them can be problematic. /dev is also unneeded. Please ensure all these dirs
+# are absolute paths.
+# Note: this does not support dirs that contain spaces.
+export OS_DIRS='/bin /etc /lib /lib64 /sbin /usr /var /tmp'
+
+# Needed to stop the display manager.
+export DM_STOP_COMMAND='service lightdm stop'
+
+# This should be '/' in most cases. This variable is useful if you want to
+# switch to a completely different OS live, such as a different OS install or a
+# chroot. If in doubt, leave it as '/'.
+# If this variable this is not '/', then it is selectively prepended to OS_DIRS
+# and HOME_DIR_OVERRIDES items such that the contents of OS_ROOT becomes the
+# new OS RAM drive. Additionally, the home drive in the phantom OS will take
+# the place of /home until reboot. This effively means you can shallow-boot a
+# different OS on the fly, which effectively replaces the host OS until reboot.
+export OS_ROOT='/'
+
+# Amount of extra RAM in GB to add to the ramdisk's total capacity. Ignored if
+# CHECK_AVAILABLE_RAM is set to '0'.
+export ADDITIONAL_RAM_GB='2'
+
+# If this is '1', ensures you have enough RAM before starting. This is sort of
+# system-dependent, and I'm unsure how to make it properly cross-OS compatible.
+# Set to '0' to skip checking if your system has enough RAM.
+#
+# If set to '1' the ramdisk size will be the amount needed + ADDITIONAL_RAM_GB.
+# If set to '0', exactly half of your total RAM will be assigned to the ramdisk
+# (note that the RAM won't actually be used until it is needed).
+export CHECK_AVAILABLE_RAM='1'
+
+# Dir containing all user homes.
+export HOME_DIR='/home'
+
+# Where our ramdisk resides.
+export RAMDISK_DIR='/mnt/ram_os_1166877'
+
+# /home will be bound here to keep a physical reference.
+export HOME_NEW_DIR='/mnt/physical_home_1166877'
+
+# If you want dirs in your home sent to RAM, specify them here.
+# Example:
+#  export HOME_DIR_OVERRIDES='/home/user/SomeObnoxiousDir /home/user/another_dir'
+# Note: this does not currently support dirs that contain spaces. Only specify
+#       directories, not files.
+export HOME_DIR_OVERRIDES=''
+
+# Makes scripts act more consistent across different systems.
+export POSIXLY_CORRECT=1
+
+
+
+# ==================================================== #
+# === Please do not edit anything below this point === #
+# ==================================================== #
+
+
+
+test -d "$OS_ROOT" || echo "Error: requested os root '$OS_ROOT' does not exist" && exit 1
+
+if test -z "$HOME_DIR" || test -z "$RAMDISK_DIR" || test -z "$HOME_NEW_DIR" || \
+   test -z "$OS_DIRS" || test -z "$DM_STOP_COMMAND";
+then
+  echo 'One of more required dirs are empty in vars.include'
+  echo 'Please see vars.include.example for examples.'
+  exit 1
+fi
+
+if [ "$HOME_DIR" = '/' ] || [ "$RAMDISK_DIR" = '/' ] || \
+   [ "$HOME_NEW_DIR" = '/' ];
+then
+  echo 'One of more dirs are set to /'
+  echo 'This is dangerous, and probably means you misunderstand what this '
+  echo 'script does. Please choose a path in /mnt instead'
+  exit 1
+fi
+
