@@ -84,10 +84,6 @@ for users. They should not be run manually unless you're an advanced user that
 have read their source and know what you are doing. Those scripts assume
 they're being run from their containing directory.
 
-You can use this system to load a whole different OS or chroot setup, which
-will replace the host OS until reboot. See `OS_ROOT` in `vars.include` for
-documentation.
-
 ## How it works
 
 * Stops your display manager
@@ -99,3 +95,10 @@ documentation.
 * After that, it's done. It will not restart your display manager; it expects
   you
   to do that manually in case your want to double-check things first.
+
+## Live OS substitution
+
+You can use this system to load a whole different OS (and even a 
+[chroot](https://en.wikipedia.org/wiki/Chroot)
+setup), which will replace the host OS until reboot. See `OS_ROOT` in
+`vars.include` for documentation.
