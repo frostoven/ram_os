@@ -60,7 +60,7 @@ export POSIXLY_CORRECT=1
 
 
 
-test -d "$OS_ROOT" || echo "Error: requested os root '$OS_ROOT' does not exist" && exit 1
+test -d "$OS_ROOT" || (echo "Error: requested os root '$OS_ROOT' does not exist" && exit 1)
 
 if test -z "$HOME_DIR" || test -z "$RAMDISK_DIR" || test -z "$HOME_NEW_DIR" || \
    test -z "$OS_DIRS" || test -z "$DM_STOP_COMMAND";
