@@ -34,13 +34,14 @@ Ubuntu and Mint.
 
 * Do not install any new software or make any system changes while this system
   is active; reboot your machine first. There's no clean way to undo what this
-  does, except for a reboot. Disable all auto-updaters before running this
-  system.
+  script does, except for a reboot. Disable all auto-updaters before running
+  this system.
 * There's a good chance this system won't work out of the box. You need to
   modify `vars.include` to set everything up as needed.
 * All new application and system logs generated while this system is active
   will be lost. Log files already open will continue to receive updates until
-  log rotation, service restart, or file invalidation.
+  log rotation, service restart, or file invalidation, but won't be visible
+  until reboot.
 * I have used this method for nearly 10 years at the time of writing, and have
   never experienced system instability while doing this. Having said that,
   please
@@ -58,12 +59,12 @@ Pre-setup:
   Do not store it in `/home` if changing to a custom `OS_ROOT`.
 * Configure `vars.include` before starting. It needs to know things like your
   display manager name, and will stop your display manager before starting the
-  sending to RAM process. If you don't yet have a `vars.include` file, copy the
-  template from `vars.include.example`.
+  sending to RAM process. If you don't yet have a `vars.include` file, copy
+  [`vars.include.example`](/vars.include.example) template.
 * If your `/tmp` dir is already RAM-mounted, ensure you remove that from
-  `vars.include`.
-* `/opt` is not included by default. Add that to `vars.include` if you want it
-  sent to RAM as well.
+  `vars.include -> OS_DIRS`.
+* `/opt` is not included by default. Add that to `vars.include -> OS_DIRS` if
+  you want it sent to RAM.
 
 Running the script:
 
