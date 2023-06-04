@@ -27,6 +27,9 @@ don't use this system. It's powerful and somewhat stable, but nonetheless
 dangerous. Users who don't fully understand the processes involved are likely
 to lose files or suffer OS corruption.
 
+This system was made specifically for Linux, and tested almost exclusively on
+Ubuntu and Mint.
+
 ## Safety notes
 
 * Do not install any new software or make any system changes while this system
@@ -69,7 +72,7 @@ Running the script:
   screen,
   but don't log in there).
 * Switch to a TTY.
-* The main script you should run is `send_os_to_ram.sh`. It can be run from
+* Run `send_os_to_ram.sh` as root. This sends the OS to RAM. It can be run from
   anywhere.
 * If the script completes successfully, you'll get a message saying so. There's
   small chance the script can die silently for uncaught errors, though all
@@ -102,3 +105,11 @@ You can use this system to load an entirely different OS (and even a
 [chroot](https://en.wikipedia.org/wiki/Chroot)
 setup), which will replace the host OS until reboot. See `OS_ROOT` in
 `vars.include` for documentation.
+
+Note that live OS substitution has only been tested with very similar operating
+systems (for example, `Mint 19.2 -> Mint 19.2`, `Ubuntu 18.04 -> Ubuntu 18.04`,
+an so forth). This script is expected to work with any OS that has the same
+base dirs, but note that, if loading a very different OS, you may need to
+terminate additional services (such a those stationed in `/run`) to prevent
+already-running essential services from referencing now non-existent installed
+files.
