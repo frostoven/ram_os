@@ -57,6 +57,10 @@ cd utils
 . ./create_needed_dirs.sh
 . ./setup_ram_disk.sh
 
+if [ "$UPDATE_SYSCTL" = '1' ]; then
+  sysctl -p || echo 'Warning: failed to run "sysctl -p"'
+fi
+
 touch "$RAMDISK_DIR/ram_os_active_1166877"
 
 echo
