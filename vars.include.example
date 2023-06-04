@@ -49,6 +49,11 @@ export HOME_NEW_DIR='/mnt/physical_home_1166877'
 #       directories, not files.
 export HOME_DIR_OVERRIDES=''
 
+# If set to '1', the application will run "sysctl -p" once everything
+# completes, which forces the system to recognise the new /etc/sysctl.conf
+# file. If in doubt, leave this as '0'.
+export UPDATE_SYSCTL='0'
+
 # Makes scripts act more consistent across different systems.
 export POSIXLY_CORRECT=1
 
