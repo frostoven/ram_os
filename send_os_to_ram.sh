@@ -76,7 +76,7 @@ $DM_STOP_COMMAND
 sleep 3
 
 cd utils
-. ./create_needed_dirs.sh
+. ./prepare_needed_dirs.sh
 . ./setup_ram_disk.sh
 
 # The critical parts of the script is done; set the completion flag to prevent
