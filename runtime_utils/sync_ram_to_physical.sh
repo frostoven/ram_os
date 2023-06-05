@@ -60,7 +60,7 @@ sync_to_physical() {
       echo "* Copy $ramdir to $physical"
     elif [ "$action" = "start" ]; then
       echo "* Copying $ramdir to $physical"
-      $RSYNC -v "$ramdir/" "$physical"
+      $RSYNC -v --delete "$ramdir/" "$physical"
     fi
   done
 }
