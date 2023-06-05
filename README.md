@@ -4,7 +4,7 @@ The purpose of this script is to make your OS roughly 100x faster at the
 expense of making it mostly read-only and consuming massive chunks of RAM.
 
 It is _specifically_ designed for situations where an entire OS is installed on
-a slow flash disk, but you have a lot of RAM. This script will offer
+a _slow flash disk_, but you have a lot of RAM. This script will offer
 little-to-no advantages for the average computer set up in a standard way.
 
 ## Summary
@@ -52,11 +52,14 @@ Ubuntu and Mint.
 
 ## Instructions
 
+Dependencies: awk, bash 4 or higher, cat, du, echo, GNU grep, mount, readlink,
+rmdir, rsync, tail, test
+
 Pre-setup:
 
 * Do not clone this repo to a directory you want sent to RAM; safe default
-  locations to store this repo is `/ram_os`, `/root/ram_os`, and `/mnt/ram_os`.
-  Do not store it in `/home` if changing to a custom `OS_ROOT`.
+  locations to store this repo are `/ram_os`, `/root/ram_os`, and
+  `/mnt/ram_os`. Do not store it in `/home` if changing to a custom `OS_ROOT`.
 * Configure `vars.include` before starting. It needs to know things like your
   display manager name, and will stop your display manager before starting the
   sending to RAM process. If you don't yet have a `vars.include` file, copy
@@ -73,8 +76,7 @@ Running the script:
   screen,
   but don't log in there).
 * Switch to a TTY.
-* Run `send_os_to_ram.sh` as root. This sends the OS to RAM. It can be run from
-  anywhere.
+* Run `send_os_to_ram.sh` as root. This sends the OS to RAM.
 * If the script completes successfully, you'll get a message saying so. There's
   small chance the script can die silently for uncaught errors, though all
   previously-known occurrences of these have been fixed.
@@ -99,6 +101,24 @@ their containing directory.
   RAM disk (e.g., `/bin` now silently points to `/mnt/ram_os_1166877/bin`)
 * After that, it's done. It will not restart the display manager; it expects
   you to do that manually in case you want to double-check things first.
+
+## Home dir overrides
+
+By adding paths to `HOME_DIR_OVERRIDES` in `vars.include`, you can send
+specific directories in your home directory to RAM. By default, nothing in your
+home is sent to RAM, only the OS itself.
+
+You can sync RAM changes in home override dirs back to the physical disk,
+though this requires additional setup. If you're interested in doing so, have a
+look at the following variables in `vars.include`:
+* `HOME_MOUNT_COMMAND`
+* `HOME_SYNC_LOCATION`
+
+After that, you can run `runtime_utils/sync_ram_to_physical.sh` to sync home
+overrides back to the physical disk.
+
+Note that the additional setup is not needed if you don't want to sync home
+override dirs back to the physical disk.
 
 ## Live OS substitution
 
