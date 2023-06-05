@@ -1,56 +1,110 @@
 #!/bin/false
 
+# Note: if your vars.include version does not match the one from
+# vars.include.example, then it means new variables have bee added. Please
+# paste any new variables from the example file into your vars.include file,
+# otherwise the script will refuse to run.
+export VERSION="2.0.0"
+
+
+## === Configure this section before running ================================ #
+
 # The dirs we want sent to the ramdisk. We don't include dirs like /proc, /sys,
 # and /run, because those don't actually reside on the disk, and messing with
 # them can be problematic. /dev is also unneeded. Please ensure all these dirs
-# are absolute paths.
-# Note: this does not support dirs that contain spaces.
-export OS_DIRS='/bin /etc /lib /lib64 /sbin /usr /var /tmp'
+# are absolute paths. Paths with spaces are supported. Don't trail with commas.
+declare -ax OS_DIRS=('/bin' '/etc' '/lib' '/lib64' '/sbin' '/usr' '/var' '/tmp')
 
-# Needed to stop the display manager.
+# This is needed to stop the display manager. If in doubt, stop your DM
+# manually before running the main script.
 export DM_STOP_COMMAND='service lightdm stop'
 
-# This should be '/' in most cases. This variable is useful if you want to
-# switch to a completely different OS live, such as a different OS install or a
-# chroot. If in doubt, leave it as '/'.
-# If this variable this is not '/', then it is selectively prepended to OS_DIRS
-# and HOME_DIR_OVERRIDES items such that the contents of OS_ROOT becomes the
-# new OS RAM drive. Additionally, the home drive in the phantom OS will take
-# the place of /home until reboot. This effively means you can shallow-boot a
-# different OS on the fly, which effectively replaces the host OS until reboot.
-export OS_ROOT='/'
+# Dir containing all user homes.
+export HOME_DIR='/home'
 
-# Amount of extra RAM in GB to add to the ramdisk's total capacity. Ignored if
-# CHECK_AVAILABLE_RAM is set to '0'.
-export ADDITIONAL_RAM_GB='2'
+
+## === Common options ======================================================= #
 
 # If this is '1', ensures you have enough RAM before starting. This is sort of
 # system-dependent, and I'm unsure how to make it properly cross-OS compatible.
 # Set to '0' to skip checking if your system has enough RAM.
 #
-# If set to '1' the ramdisk size will be the amount needed + ADDITIONAL_RAM_GB.
+# If set to '1', ramdisk size will be minimum RAM needed + ADDITIONAL_RAM_GB.
 # If set to '0', exactly half of your total RAM will be assigned to the ramdisk
 # (note that the RAM won't actually be used until it is needed).
 export CHECK_AVAILABLE_RAM='1'
 
-# Dir containing all user homes.
-export HOME_DIR='/home'
+# Amount of extra RAM in GB to add to the ramdisk's total capacity. Ignored if
+# CHECK_AVAILABLE_RAM is set to '0'.
+export ADDITIONAL_RAM_GB='2'
+
+# If you want specific dirs in your home sent to RAM, specify them here. This
+# is completely optional. Don't trail with commas.
+# Example:
+#  HOME_DIR_OVERRIDES=('/home/user/SomeDir' '/home/user/dir with spaces')
+declare -ax HOME_DIR_OVERRIDES=(
+  # one quoted directory per line; don't trail with commas.
+)
+
+
+## === Advanced options ===================================================== #
+
+# Ignored if HOME_MOUNT_COMMAND is empty.
+# This will be used as the physical location for the original home that has no
+# overrides to make it part-RAM. It will be created if it does not exist.
+# To keep the mount command simple, this path does not support spaces.
+export HOME_UNADULTERATED='/mnt/physical_home_1166877'
+
+# Leave this empty if you don't care about advanced features in runtime_utils.
+# This is useful for running aftercare commands later, such as syncing home
+# overrides back to the real disk. Note that it can't be used to sync OS files
+# back to the physical disk, only home overrides.
+#
+# Example where home is located on the / partition, on sda1:
+#  export HOME_MOUNT_COMMAND="mount /dev/sda1 $HOME_UNADULTERATED"
+# Example where home has a dedicated partition, say, sda3:
+#  export HOME_MOUNT_COMMAND="mount /dev/sda3 $HOME_UNADULTERATED"
+export HOME_MOUNT_COMMAND=""
+
+# Leave this empty if HOME_MOUNT_COMMAND is empty.
+#
+# Example where home is located on the / partition, on sda1:
+#  export HOME_SYNC_LOCATION="$HOME_UNADULTERATED/home"
+# Example where home has a dedicated partition, say, sda3:
+#  export HOME_SYNC_LOCATION="$HOME_UNADULTERATED"
+export HOME_SYNC_LOCATION=""
 
 # Where our ramdisk resides.
 export RAMDISK_DIR='/mnt/ram_os_1166877'
 
-# /home will be bound here to keep a physical reference.
-export HOME_NEW_DIR='/mnt/physical_home_1166877'
+# If set to '1', the application will run "sysctl -p" once everything
+# completes, which forces the system to recognise the new /etc/sysctl.conf
+# file. If in doubt, leave this as '0'.
+export UPDATE_SYSCTL='0'
 
-# If you want dirs in your home sent to RAM, specify them here.
-# Example:
-#  export HOME_DIR_OVERRIDES='/home/user/SomeObnoxiousDir /home/user/another_dir'
-# Note: this does not currently support dirs that contain spaces. Only specify
-#       directories, not files.
-export HOME_DIR_OVERRIDES=''
+# Command used to copy directories. Note that, if changing to something other
+# than rsync, you'll need to choose a tool capable of merging directories and
+# that understands "--delete".
+# Change -a to -av if you want a full list of files being copied.
+export RSYNC='rsync -a'
 
-# Makes scripts act more consistent across different systems.
-export POSIXLY_CORRECT=1
+
+## === Live OS substitution ================================================= #
+
+# This should be '/' in most cases. This variable is useful if you want to
+# switch to a completely different OS live, such as a different OS install or a
+# chroot. If in doubt, leave it as '/'.
+#
+# If this variable this is not '/', then it is selectively prepended to OS_DIRS
+# and HOME_DIR_OVERRIDES items such that the contents of OS_ROOT becomes the
+# new OS RAM drive. Additionally, the home drive in the phantom OS will take
+# the place of /home until reboot. This effectively means you can shallow-boot
+# a different OS on the fly, which effectively replaces the host OS until
+# reboot.
+export OS_ROOT='/'
+
+
+## === User section end ===================================================== #
 
 
 
@@ -60,9 +114,14 @@ export POSIXLY_CORRECT=1
 
 
 
+# Makes scripts act more consistent across different systems.
+export POSIXLY_CORRECT=1
+
+# Sanity check.
 test -d "$OS_ROOT" || (echo "Error: requested os root '$OS_ROOT' does not exist" && exit 1)
 
-if test -z "$HOME_DIR" || test -z "$RAMDISK_DIR" || test -z "$HOME_NEW_DIR" || \
+# Generic safety checks. More advanced tests are done in the main scripts.
+if test -z "$HOME_DIR" || test -z "$RAMDISK_DIR" || test -z "$HOME_UNADULTERATED" || \
    test -z "$OS_DIRS" || test -z "$DM_STOP_COMMAND";
 then
   echo 'One of more required dirs are empty in vars.include'
@@ -70,12 +129,12 @@ then
   exit 1
 fi
 
+# Generic safety checks. More advanced tests are done in the main scripts.
 if [ "$HOME_DIR" = '/' ] || [ "$RAMDISK_DIR" = '/' ] || \
-   [ "$HOME_NEW_DIR" = '/' ];
+   [ "$HOME_UNADULTERATED" = '/' ];
 then
   echo 'One of more dirs are set to /'
   echo 'This is dangerous, and probably means you misunderstand what this '
   echo 'script does. Please choose a path in /mnt instead'
   exit 1
 fi
-

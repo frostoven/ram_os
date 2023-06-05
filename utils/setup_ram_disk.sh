@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -feu
 
 ## === Include needed files ===================================== ##
 
@@ -6,19 +6,17 @@
 
 ## === Perform needed actions =================================== ##
 
-
-# Note: do not quote OS_DIRS and HOME_DIR_OVERRIDES; these vars rely on
-# splitting to work.
-all_files_list=''
-for dir in $OS_DIRS $HOME_DIR_OVERRIDES; do 
-  all_files_list="$all_files_list $OS_ROOT/$dir"
-done 
+# Join os dirs and home dirs to to calculate RAM requirements.
+all_files_list=()
+for dir in "${OS_DIRS[@]}" "${HOME_DIR_OVERRIDES[@]}"; do
+  all_files_list+=("$OS_ROOT/$dir")
+done
 
 if [ "$CHECK_AVAILABLE_RAM" = '1' ]; then
   echo 'Calculating RAM requirements. This check can be disabled in vars.include'
 
-  # Dev note: don't quote $all_files_list, it relies on splitting.
-  ram_needed="$(du -cb -- $all_files_list 2>/dev/null | tail -n1 | awk '{ printf $1 }')"
+  # Check size of all files the user wants sent to RAM.
+  ram_needed="$(du -cb -- "${all_files_list[@]}" 2>/dev/null | tail -n1 | awk '{ printf $1 }')"
   ram_available="$(grep 'MemAvailable:' /proc/meminfo | awk '{ printf $2 }')"
 
   # ram_available is in Kb. Bump 3 orders.
@@ -44,9 +42,6 @@ else
   mount -t tmpfs none "$RAMDISK_DIR"
 fi
 
-# Bind /home* to /mnt/home*.
-mount -o bind "$HOME_DIR" "$HOME_NEW_DIR"
-
 # Do safety checks and create all the needed ramdisk dirs. It then copies all
 # OS dirs to ramdisk. This operation is idempotent.
 rsync_files() {
@@ -54,8 +49,7 @@ rsync_files() {
   # either 'y' for yes or 'n' for no.
   first_run="$1"
 
-  # Dev note: don't quote $OS_DIRS, it relies on splitting.
-  for dir in $OS_DIRS; do
+  for dir in "${OS_DIRS[@]}"; do
     source_path="$OS_ROOT/$dir"
     ramdisk_path="$RAMDISK_DIR/$dir"
 
@@ -94,7 +88,7 @@ rsync_files() {
       # Note: the trailing slashes are important; they ensure rsync merges the
       # directories. This is somewhat dangerous in automation, which is why the
       # check above ensures everything is pointing to the correct place.
-      rsync -a "$source_path/" "$ramdisk_path/"
+      $RSYNC "$source_path/" "$ramdisk_path"
     else
       # Note: to support live OS replacements, don't use OS_ROOT in the target.
       echo "* Overlaying: '$ramdisk_path' => '/$dir'"
@@ -103,7 +97,7 @@ rsync_files() {
       # second time, which slightly reduces the possibility of newly created
       # files not existing. The delete flag removes any stale files that may
       # have come into existence.
-      rsync -a --delete "$source_path/" "$ramdisk_path/"
+      $RSYNC --delete "$source_path/" "$ramdisk_path"
 
       # Note: to support live OS replacements, don't use OS_ROOT in the target.
       mount -o bind "$ramdisk_path" "/$dir"
@@ -111,7 +105,7 @@ rsync_files() {
   done
 }
 
-echo "Flushing disks."
+echo "Flushing disk cache."
 
 # Flush the disk so it doesn't slow us down later.
 sync
@@ -132,19 +126,18 @@ rsync_files 'n'
 # Live OS replacement support: mount the phantom OS's home over the host's.
 if [ "$(readlink -f "$OS_ROOT")" != '/' ]; then
   echo "Setup is live OS substitution; performing a mount bind:"
-  echo " * $OS_ROOT/home => /home"
-  mount -o bind "$OS_ROOT/home" /home
+  echo " * $OS_ROOT/$HOME_DIR => $HOME_DIR"
+  mount -o bind "$OS_ROOT/$HOME_DIR" "$HOME_DIR"
 fi
 
 # Push any user-requested home dirs into ram.
-if test -n "$HOME_DIR_OVERRIDES"; then
+if [ "${#HOME_DIR_OVERRIDES[@]}" != '0' ]; then
   echo "Syncing home dir overrides."
 
   # Flush disk.
   sync
 
-  # Dev note: don't quote $HOME_DIR_OVERRIDES, it relies on splitting.
-  for dir in $HOME_DIR_OVERRIDES; do
+  for dir in "${HOME_DIR_OVERRIDES[@]}"; do
     source_path="$OS_ROOT/$dir"
     ramdisk_path="$RAMDISK_DIR/$dir"
 
@@ -177,7 +170,7 @@ if test -n "$HOME_DIR_OVERRIDES"; then
     fi
 
     echo "* Copying '$source_path' to '$ramdisk_path'"
-    cp -a "$source_path" "$ramdisk_path"
+    $RSYNC "$source_path/" "$ramdisk_path"
 
     # Note: use OS_ROOT in the target even for live OS replacements, because
     # /the_other_os/home was mounted over /home above.
@@ -187,4 +180,3 @@ if test -n "$HOME_DIR_OVERRIDES"; then
 else
   echo "No home overrides specified; skipping."
 fi
-
