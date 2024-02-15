@@ -50,6 +50,12 @@ Ubuntu and Mint.
   your OS into a ramdisk. This means that you run the risk of accidentally
   saving files to RAM, which is cleared on reboot.
 
+## My Wi-Fi / USB device / whatever isn't working
+
+When you run this script, some parts of your OS effectively become read-only, including the parts responsible for accepting new software and hardware connections.
+
+Please connect all your Wi-Fi and USB devices *before* running this script, and everything should work fine.
+
 ## Instructions
 
 Dependencies: awk, bash 4 or higher, cat, du, echo, GNU grep, mount, readlink,
